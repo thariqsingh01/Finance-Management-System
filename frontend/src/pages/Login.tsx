@@ -3,15 +3,24 @@ import { useState } from 'react';
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
   return (
     <main className="login-page">
       <section className="login-card">
         <h1>Finance Management System</h1>
         <p>Sign in to manage your finances.</p>
 
-        <form>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+
+            console.log('Email:', email);
+            console.log('Password:', password);
+          }}
+        >
           <div className="form-group">
             <label htmlFor="email">Email</label>
+
             <input
               id="email"
               type="email"
@@ -23,6 +32,7 @@ function Login() {
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
+
             <input
               id="password"
               type="password"
