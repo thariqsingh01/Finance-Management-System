@@ -4,6 +4,7 @@ function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   return (
     <main className="login-page">
@@ -14,7 +15,7 @@ function Login() {
         {error && <p className="error-message">{error}</p>}
         
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
 
             setError('');
@@ -29,8 +30,37 @@ function Login() {
               return;
             }
 
-            console.log('Email:', email);
-            console.log('Password:', password);
+            setLoading(true);
+
+            try {
+              const response = await fetch(
+                'http://localhost:5000/api/auth/login',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    email,
+                    password,
+                  }),
+                }
+              );
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                setError(data.message);
+                return;
+              }
+
+              console.log('Login successful:', data);
+            } catch (error) {
+              console.error('Login request failed:', error);
+              setError('Unable to connect to the server.');
+            } finally {
+              setLoading(false);
+            }
           }}
         >
           <div className="form-group">
@@ -57,7 +87,9 @@ function Login() {
             />
           </div>
 
-          <button type="submit">Sign In</button>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Signing In...' : 'Sign In'}
+          </button>
         </form>
 
         <p className="register-link">

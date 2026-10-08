@@ -49,16 +49,54 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
 
-  console.log('Login attempt:');
-  console.log('Email:', email);
-  console.log('Password:', password);
+    const { email, password } = req.body;
 
-  res.json({
-    message: 'Login request received',
-    email: email
-  });
+    const sql = `
+        SELECT id, name, email, address, password
+        FROM users
+        WHERE email = ?
+    `;
+
+    db.query(sql, [email], async (err, results) => {
+
+        if (err) {
+            console.error('Login failed:', err);
+
+            return res.status(500).json({
+                message: 'Login failed'
+            });
+        }
+
+        if (results.length === 0) {
+            return res.status(401).json({
+                message: 'Invalid email or password'
+            });
+        }
+
+        const user = results[0];
+
+        const passwordMatch = await bcrypt.compare(
+            password,
+            user.password
+        );
+
+        if (!passwordMatch) {
+            return res.status(401).json({
+                message: 'Invalid email or password'
+            });
+        }
+
+        res.json({
+            message: 'Login successful',
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                address: user.address
+            }
+        });
+    });
 });
 
 module.exports = app;
