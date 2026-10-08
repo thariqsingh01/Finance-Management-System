@@ -54,6 +54,8 @@ function Login() {
                 return;
               }
 
+              localStorage.setItem('token', data.token);
+
               console.log('Login successful:', data);
             } catch (error) {
               console.error('Login request failed:', error);
