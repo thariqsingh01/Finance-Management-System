@@ -3,6 +3,7 @@ const cors = require("cors");
 const db = require("./config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const authenticateToken = require("./middleware/authMiddleware");
 
 const app = express();
 
@@ -103,6 +104,15 @@ app.post("/api/auth/login", (req, res) => {
       },
     });
   });
+});
+
+app.get("/api/auth/me", authenticateToken, (req, res) => {
+
+  res.json({
+    message: "You are authenticated",
+    user: req.user,
+  });
+
 });
 
 module.exports = app;
