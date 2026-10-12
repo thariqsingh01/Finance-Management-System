@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useAuth } from '../context/useAuth';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
   return (
     <main className="login-page">
@@ -54,9 +56,9 @@ function Login() {
                 return;
               }
 
-              localStorage.setItem('token', data.token);
-
+              login(data.user, data.token);
               console.log('Login successful:', data);
+
             } catch (error) {
               console.error('Login request failed:', error);
               setError('Unable to connect to the server.');
