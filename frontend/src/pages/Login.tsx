@@ -1,10 +1,14 @@
-import { useState } from 'react';
-import { useAuth } from '../context/useAuth';
+import { useState } from "react";
+import { useAuth } from "../context/useAuth";
 
-function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+type LoginProps = {
+  onSwitchToSignup: () => void;
+};
+
+function Login({ onSwitchToSignup }: LoginProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
 
@@ -15,20 +19,20 @@ function Login() {
         <p>Sign in to manage your finances.</p>
 
         {error && <p className="error-message">{error}</p>}
-        
+
         <form
           onSubmit={async (event) => {
             event.preventDefault();
 
-            setError('');
+            setError("");
 
             if (!email) {
-              setError('Email is required.');
+              setError("Email is required.");
               return;
             }
 
             if (!password) {
-              setError('Password is required.');
+              setError("Password is required.");
               return;
             }
 
@@ -36,17 +40,17 @@ function Login() {
 
             try {
               const response = await fetch(
-                'http://localhost:5000/api/auth/login',
+                "http://localhost:5000/api/auth/login",
                 {
-                  method: 'POST',
+                  method: "POST",
                   headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                   },
                   body: JSON.stringify({
                     email,
                     password,
                   }),
-                }
+                },
               );
 
               const data = await response.json();
@@ -57,11 +61,10 @@ function Login() {
               }
 
               login(data.user, data.token);
-              console.log('Login successful:', data);
-
+              console.log("Login successful:", data);
             } catch (error) {
-              console.error('Login request failed:', error);
-              setError('Unable to connect to the server.');
+              console.error("Login request failed:", error);
+              setError("Unable to connect to the server.");
             } finally {
               setLoading(false);
             }
@@ -92,12 +95,21 @@ function Login() {
           </div>
 
           <button type="submit" disabled={loading}>
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
         <p className="register-link">
-          Don't have an account? <a href="#">Create an account</a>
+          Don't have an account?{" "}
+          <a
+            href="#"
+            onClick={(event) => {
+              event.preventDefault();
+              onSwitchToSignup();
+            }}
+          >
+            Create an account
+          </a>
         </p>
       </section>
     </main>
