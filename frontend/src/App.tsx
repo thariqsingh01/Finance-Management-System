@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import AuthTest from './AuthTest';
 import { useAuth } from './context/useAuth';
+import Dashboard from './components/Dashboard';
 
 function App() {
   const [showSignup, setShowSignup] = useState(false);
   const { user } = useAuth();
 
   if (user) {
-    return <AuthTest />;
+    return <Dashboard />;
   }
 
   return (
