@@ -106,13 +106,34 @@ app.post("/api/auth/login", (req, res) => {
   });
 });
 
+
 app.get("/api/auth/me", authenticateToken, (req, res) => {
+  const sql = `
+    SELECT id, name, email, address
+    FROM users
+    WHERE id = ?
+  `;
 
-  res.json({
-    message: "You are authenticated",
-    user: req.user,
+  db.query(sql, [req.user.userId], (err, results) => {
+    if (err) {
+      console.error("Failed to retrieve user:", err);
+
+      return res.status(500).json({
+        message: "Failed to retrieve user details",
+      });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      user: results[0],
+    });
   });
-
 });
+
 
 module.exports = app;
