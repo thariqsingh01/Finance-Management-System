@@ -10,7 +10,7 @@ function Dashboard() {
       </h1>
 
       <p>
-        Welcome to your Personal Finance Management System.
+        Welcome to Zenvora. Your Personal Finance Management System.
       </p>
     </main>
   );

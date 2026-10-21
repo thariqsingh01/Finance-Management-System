@@ -15,7 +15,7 @@ function Login({ onSwitchToSignup }: LoginProps) {
   return (
     <main className="login-page">
       <section className="login-card">
-        <h1>Finance Management System</h1>
+        <h1>Zenvora</h1>
         <p>Sign in to manage your finances.</p>
 
         {error && <p className="error-message">{error}</p>}
