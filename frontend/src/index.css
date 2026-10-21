@@ -1,3 +1,8 @@
+
+/* ========================================
+   1. GLOBAL RESET
+   ======================================== */
+
 * {
   margin: 0;
   padding: 0;
@@ -10,38 +15,113 @@ body,
   min-height: 100%;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  color: #222;
+html {
+  color-scheme: dark;
 }
+
+/* ========================================
+   2. DESIGN TOKENS — DARK MODE
+   ======================================== */
+
+:root {
+  --color-bg: #081F2A;
+  --color-surface: #102A36;
+  --color-surface-raised: #1B3541;
+
+  --color-text: #F1F5F9;
+  --color-text-muted: #A8BBC5;
+
+  --color-border: #294451;
+
+  --color-primary: #8B5CF6;
+  --color-primary-hover: #A78BFA;
+  --color-primary-subtle: #2E2150;
+
+  --color-success: #14B8A6;
+  --color-danger: #F87171;
+  --color-warning: #FBBF24;
+
+  --radius-card: 16px;
+  --radius-control: 10px;
+
+  --shadow-card: 0 4px 20px rgb(0 0 0 / 20%);
+}
+
+/* ========================================
+   3. DESIGN TOKENS — LIGHT MODE
+   ======================================== */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-bg: #F4F7FA;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #E8EEF3;
+
+  --color-text: #102A36;
+  --color-text-muted: #526575;
+
+  --color-border: #D6E0E7;
+
+  --color-primary: #7C3AED;
+  --color-primary-hover: #6D28D9;
+  --color-primary-subtle: #EDE9FE;
+
+  --color-success: #0F766E;
+  --color-danger: #DC2626;
+  --color-warning: #B45309;
+
+  --shadow-card: 0 4px 20px rgb(15 23 42 / 8%);
+}
+
+/* ========================================
+   4. GLOBAL STYLES
+   ======================================== */
+
+body {
+  font-family: Inter, Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+
+/* ========================================
+   5. LOGIN AND SIGNUP PAGES
+   ======================================== */
 
 .login-page {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 24px;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
   padding: 40px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
 }
 
 .login-card h1 {
   margin-bottom: 10px;
   font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .login-card > p {
   margin-bottom: 30px;
-  color: #666;
+  color: var(--color-text-muted);
+  line-height: 1.5;
 }
+
+/* Form fields */
 
 .form-group {
   margin-bottom: 20px;
@@ -50,50 +130,87 @@ body {
 .form-group label {
   display: block;
   margin-bottom: 8px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--color-text);
 }
 
 .form-group input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-family: inherit;
   font-size: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.8;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #333;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-subtle);
 }
+
+/* Primary button */
 
 .login-card button {
   width: 100%;
-  padding: 12px;
+  padding: 12px 16px;
   border: none;
-  border-radius: 6px;
-  background: #222;
-  color: white;
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-family: inherit;
   font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
 }
 
 .login-card button:hover {
-  background: #444;
+  background: var(--color-primary-hover);
 }
+
+.login-card button:active {
+  transform: scale(0.99);
+}
+
+.login-card button:focus-visible {
+  outline: 2px solid var(--color-primary-hover);
+  outline-offset: 3px;
+}
+
+/* Registration link */
 
 .register-link {
   margin-top: 20px;
   text-align: center;
   font-size: 14px;
+  color: var(--color-text-muted);
 }
 
 .register-link a {
-  color: #222;
+  color: var(--color-primary-hover);
   font-weight: 600;
+  text-decoration: none;
 }
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Error messages */
 
 .login-card .error-message {
   margin-bottom: 20px;
-  color: #d32f2f;
+  color: var(--color-danger);
   font-size: 14px;
+  line-height: 1.5;
 }
