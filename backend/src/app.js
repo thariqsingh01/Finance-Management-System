@@ -252,4 +252,29 @@ app.post("/api/accounts", authenticateToken, (req, res) => {
   });
 });
 
+
+
+app.get("/api/account-types", authenticateToken, (req, res) => {
+  const sql = `
+    SELECT id, type
+    FROM account_types
+    ORDER BY type ASC
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Failed to retrieve account types:", err);
+
+      return res.status(500).json({
+        message: "Failed to retrieve account types",
+      });
+    }
+
+    res.json({
+      accountTypes: results,
+    });
+  });
+});
+
+
 module.exports = app;
