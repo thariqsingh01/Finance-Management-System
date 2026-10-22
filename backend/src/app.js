@@ -136,4 +136,35 @@ app.get("/api/auth/me", authenticateToken, (req, res) => {
 });
 
 
+app.get("/api/accounts", authenticateToken, (req, res) => {
+  const sql = `
+    SELECT
+      accounts.id,
+      accounts.name,
+      accounts.balance,
+      account_types.type AS accountType
+    FROM accounts
+    INNER JOIN account_types
+      ON accounts.account_type_id = account_types.id
+    WHERE accounts.user_id = ?
+    ORDER BY accounts.name ASC
+  `;
+
+  db.query(sql, [req.user.userId], (err, results) => {
+    if (err) {
+      console.error("Failed to retrieve accounts:", err);
+
+      return res.status(500).json({
+        message: "Failed to retrieve accounts",
+      });
+    }
+
+    res.json({
+      accounts: results,
+    });
+  });
+});
+
+
+
 module.exports = app;
