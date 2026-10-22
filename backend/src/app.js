@@ -106,7 +106,6 @@ app.post("/api/auth/login", (req, res) => {
   });
 });
 
-
 app.get("/api/auth/me", authenticateToken, (req, res) => {
   const sql = `
     SELECT id, name, email, address
@@ -134,7 +133,6 @@ app.get("/api/auth/me", authenticateToken, (req, res) => {
     });
   });
 });
-
 
 app.get("/api/accounts", authenticateToken, (req, res) => {
   const sql = `
@@ -165,6 +163,93 @@ app.get("/api/accounts", authenticateToken, (req, res) => {
   });
 });
 
+app.post("/api/accounts", authenticateToken, (req, res) => {
+  const { name, accountTypeId, balance } = req.body;
 
+  // Validate the account name.
+  if (
+    typeof name !== "string" ||
+    name.trim().length === 0 ||
+    name.trim().length > 100
+  ) {
+    return res.status(400).json({
+      message: "Account name must be between 1 and 100 characters",
+    });
+  }
+
+  // Validate the account type ID.
+  if (!Number.isInteger(accountTypeId) || accountTypeId <= 0) {
+    return res.status(400).json({
+      message: "A valid account type is required",
+    });
+  }
+
+  // Validate the starting balance.
+  const parsedBalance = typeof balance === "number" ? balance : Number(balance);
+
+  if (
+    balance === undefined ||
+    balance === null ||
+    (typeof balance === "string" && balance.trim() === "") ||
+    !Number.isFinite(parsedBalance) ||
+    Math.abs(parsedBalance) > 9999999999999.99
+  ) {
+    return res.status(400).json({
+      message: "A valid starting balance is required",
+    });
+  }
+
+  // Check that the selected account type exists.
+  const typeSql = `
+    SELECT id
+    FROM account_types
+    WHERE id = ?
+  `;
+
+  db.query(typeSql, [accountTypeId], (typeErr, typeResults) => {
+    if (typeErr) {
+      console.error("Failed to validate account type:", typeErr);
+
+      return res.status(500).json({
+        message: "Failed to create account",
+      });
+    }
+
+    if (typeResults.length === 0) {
+      return res.status(400).json({
+        message: "Selected account type does not exist",
+      });
+    }
+
+    const insertSql = `
+      INSERT INTO accounts (user_id, account_type_id, name, balance)
+      VALUES (?, ?, ?, ?)
+    `;
+
+    db.query(
+      insertSql,
+      [req.user.userId, accountTypeId, name.trim(), parsedBalance.toFixed(2)],
+      (insertErr, result) => {
+        if (insertErr) {
+          console.error("Failed to create account:", insertErr);
+
+          return res.status(500).json({
+            message: "Failed to create account",
+          });
+        }
+
+        res.status(201).json({
+          message: "Account created successfully",
+          account: {
+            id: result.insertId,
+            name: name.trim(),
+            accountTypeId,
+            balance: parsedBalance.toFixed(2),
+          },
+        });
+      },
+    );
+  });
+});
 
 module.exports = app;
