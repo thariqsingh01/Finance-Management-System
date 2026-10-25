@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/useAuth";
+import '../Auth.css';
 
 type LoginProps = {
   onSwitchToSignup: () => void;

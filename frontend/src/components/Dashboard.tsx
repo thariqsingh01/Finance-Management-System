@@ -1,4 +1,5 @@
 import { useAuth } from '../context/useAuth';
+import './Dashboard.css';
 
 function Dashboard() {
   const { user, logout } = useAuth();

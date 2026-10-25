@@ -4,6 +4,7 @@ import Signup from './pages/Signup';
 import { useAuth } from './context/useAuth';
 import Dashboard from './components/Dashboard';
 import Accounts from './pages/Accounts';
+import './App.css';
 
 function App() {
   const [showSignup, setShowSignup] = useState(false);
