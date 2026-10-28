@@ -348,11 +348,12 @@ app.post("/api/transactions", authenticateToken, (req, res) => {
   }
 
   // Validate the transaction type.
-  if (!["Income", "Expense"].includes(transactionType)) {
-    return res.status(400).json({
-      message: "Transaction type must be Income or Expense",
-    });
-  }
+// 1 = Income, 2 = Expense.
+if (![1, 2].includes(transactionType)) {
+  return res.status(400).json({
+    message: "Transaction type must be 1 (Income) or 2 (Expense)",
+  });
+}
 
   // Validate the amount.
   const parsedAmount = Number(amount);
@@ -511,7 +512,7 @@ app.post("/api/transactions", authenticateToken, (req, res) => {
 
                       if (statusId === 1) {
                         const adjustment =
-                          transactionType === "Income"
+                          transactionType === 1
                             ? parsedAmount
                             : -parsedAmount;
 
