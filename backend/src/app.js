@@ -277,4 +277,299 @@ app.get("/api/account-types", authenticateToken, (req, res) => {
 });
 
 
+// Get transaction categories
+app.get("/api/categories", authenticateToken, (req, res) => {
+  const sql = `
+    SELECT id, category
+    FROM categories
+    ORDER BY category ASC
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Failed to retrieve categories:", err);
+
+      return res.status(500).json({
+        message: "Failed to retrieve categories",
+      });
+    }
+
+    res.json({
+      categories: results,
+    });
+  });
+});
+
+// Get transaction statuses
+app.get("/api/statuses", authenticateToken, (req, res) => {
+  const sql = `
+    SELECT id, status
+    FROM statuses
+    ORDER BY id ASC
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Failed to retrieve statuses:", err);
+
+      return res.status(500).json({
+        message: "Failed to retrieve statuses",
+      });
+    }
+
+    res.json({
+      statuses: results,
+    });
+  });
+});
+
+
+
+app.post("/api/transactions", authenticateToken, (req, res) => {
+  const {accountId, categoryId, amount, date, description, notes, statusId, transactionType,} = req.body;
+
+  // Validate the account ID.
+  if (!Number.isInteger(accountId) || accountId <= 0) {
+    return res.status(400).json({
+      message: "A valid account is required",
+    });
+  }
+
+  // Validate the category and status IDs.
+  if (
+    !Number.isInteger(categoryId) ||
+    categoryId <= 0 ||
+    !Number.isInteger(statusId) ||
+    statusId <= 0
+  ) {
+    return res.status(400).json({
+      message: "A valid category and status are required",
+    });
+  }
+
+  // Validate the transaction type.
+  if (!["Income", "Expense"].includes(transactionType)) {
+    return res.status(400).json({
+      message: "Transaction type must be Income or Expense",
+    });
+  }
+
+  // Validate the amount.
+  const parsedAmount = Number(amount);
+
+  if (
+    amount === undefined ||
+    amount === null ||
+    String(amount).trim() === "" ||
+    !Number.isFinite(parsedAmount) ||
+    parsedAmount <= 0 ||
+    parsedAmount > 9999999999999.99
+  ) {
+    return res.status(400).json({
+      message: "Amount must be a positive, valid number",
+    });
+  }
+
+  // Validate the date.
+  if (
+    typeof date !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?$/.test(date) ||
+    Number.isNaN(Date.parse(date))
+  ) {
+    return res.status(400).json({
+      message: "A valid transaction date is required",
+    });
+  }
+
+  // Validate optional text fields.
+  if (
+    (description != null &&
+      (typeof description !== "string" || description.length > 255)) ||
+    (notes != null && typeof notes !== "string")
+  ) {
+    return res.status(400).json({
+      message: "Description or notes are invalid",
+    });
+  }
+
+  // Confirm the account belongs to the logged-in user.
+  const accountSql = `
+    SELECT id
+    FROM accounts
+    WHERE id = ? AND user_id = ?
+  `;
+
+  db.query(
+    accountSql,
+    [accountId, req.user.userId],
+    (accountErr, accountResults) => {
+      if (accountErr) {
+        console.error("Failed to validate account:", accountErr);
+        return res.status(500).json({
+          message: "Failed to create transaction",
+        });
+      }
+
+      if (accountResults.length === 0) {
+        return res.status(404).json({
+          message: "Account not found",
+        });
+      }
+
+      // Validate the category and status exist.
+      const lookupSql = `
+        SELECT
+          (SELECT COUNT(*) FROM categories WHERE id = ?) AS categoryCount,
+          (SELECT COUNT(*) FROM statuses WHERE id = ?) AS statusCount
+      `;
+
+      db.query(
+        lookupSql,
+        [categoryId, statusId],
+        (lookupErr, lookupResults) => {
+          if (lookupErr) {
+            console.error("Failed to validate transaction fields:", lookupErr);
+            return res.status(500).json({
+              message: "Failed to create transaction",
+            });
+          }
+
+          if (
+            lookupResults[0].categoryCount === 0 ||
+            lookupResults[0].statusCount === 0
+          ) {
+            return res.status(400).json({
+              message: "The selected category or status does not exist",
+            });
+          }
+
+          // Save the transaction and its account link together.
+          db.getConnection((connectionErr, connection) => {
+            if (connectionErr) {
+              console.error("Failed to get database connection:", connectionErr);
+              return res.status(500).json({
+                message: "Failed to create transaction",
+              });
+            }
+
+            connection.beginTransaction((beginErr) => {
+              if (beginErr) {
+                connection.release();
+                console.error("Failed to start transaction:", beginErr);
+                return res.status(500).json({
+                  message: "Failed to create transaction",
+                });
+              }
+
+              const rollback = (message, statusCode = 500) => {
+                connection.rollback(() => {
+                  connection.release();
+                  res.status(statusCode).json({ message });
+                });
+              };
+
+              const insertSql = `
+                INSERT INTO transactions
+                  (category_id, amount, date, description, notes, status_id)
+                VALUES (?, ?, ?, ?, ?, ?)
+              `;
+
+              connection.query(
+                insertSql,
+                [
+                  categoryId,
+                  parsedAmount.toFixed(2),
+                  date.replace("T", " "),
+                  description?.trim() || null,
+                  notes?.trim() || null,
+                  statusId,
+                ],
+                (insertErr, insertResult) => {
+                  if (insertErr) {
+                    console.error("Failed to insert transaction:", insertErr);
+                    return rollback("Failed to create transaction");
+                  }
+
+                  const transactionId = insertResult.insertId;
+
+                  const linkSql = `
+                    INSERT INTO account_transactions
+                      (account_id, transaction_id, account_role_id, transaction_type)
+                    VALUES (?, ?, ?, ?)
+                  `;
+
+                  // Role 1 represents the account associated with this transaction.
+                  // This is an application-level convention; the database doesn't enforce it.
+                  connection.query(
+                    linkSql,
+                    [accountId, transactionId, 1, transactionType],
+                    (linkErr) => {
+                      if (linkErr) {
+                        console.error("Failed to link transaction to account:", linkErr);
+                        return rollback("Failed to create transaction");
+                      }
+
+                      if (statusId === 1) {
+                        const adjustment =
+                          transactionType === "Income"
+                            ? parsedAmount
+                            : -parsedAmount;
+
+                        const balanceSql = `
+                          UPDATE accounts
+                          SET balance = balance + ?
+                          WHERE id = ? AND user_id = ?
+                        `;
+
+                        connection.query(
+                          balanceSql,
+                          [
+                            adjustment.toFixed(2),
+                            accountId,
+                            req.user.userId,
+                          ],
+                          (balanceErr, balanceResult) => {
+                            if (balanceErr || balanceResult.affectedRows !== 1) {
+                              console.error(
+                                "Failed to update account balance:",
+                                balanceErr
+                              );
+                              return rollback("Failed to update account balance");
+                            }
+
+                            finish();
+                          }
+                        );
+                      } else {
+                        finish();
+                      }
+
+                      function finish() {
+                        connection.commit((commitErr) => {
+                          if (commitErr) {
+                            console.error("Failed to save transaction:", commitErr);
+                            return rollback("Failed to save transaction");
+                          }
+
+                          connection.release();
+
+                          res.status(201).json({
+                            message: "Transaction created successfully",
+                            transactionId,
+                          });
+                        });
+                      }
+                    }
+                  );
+                }
+              );
+            });
+          });
+        }
+      );
+    }
+  );
+});
+
+
 module.exports = app;
