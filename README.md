@@ -174,10 +174,10 @@ finance-management-system/
 
 ## Roadmap
 
-* [ ] Project setup
-* [ ] Database schema
-* [ ] Authentication
-* [ ] Account management
+* [x] Project setup
+* [x] Database schema
+* [x] Authentication
+* [x] Account management
 * [ ] Transaction management
 * [ ] Transfers
 * [ ] Financial dashboard
